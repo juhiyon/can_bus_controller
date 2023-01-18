@@ -5,11 +5,11 @@ input [63:0] rx_data;
 input [1:0] uart_start;
 output reg txd;
 
-    reg [11:0] clk_cnt=0;//125MHZ¸¦ 115200º¸µå·¹ÀÌÆ® ¸ÂÃß±â À§ÇØ
-    reg [3:0] tx_st=4'b0000;//idle,start,data,stop »óÅÂ ³ªÅ¸³»±â À§ÇÔ
-    reg [7:0] tx_result;//ÇöÀç º¸³¾ ¹®ÀÚ°¡ ¹«¾ùÀÎÁö ³ªÅ¸³»±â À§ÇÔ
-    reg stst=0;//cnt »óÅÂ¿¡ µû¶ó¼­.
-    reg [3:0]txd_cnt=0;//byte À§Ä¡ ³ªÅ¸³¿
+    reg [11:0] clk_cnt=0;//125MHZë¥¼ 115200ë³´ë“œë ˆì´íŠ¸ ë§ì¶”ê¸° ìœ„í•´
+    reg [3:0] tx_st=4'b0000;//idle,start,data,stop ìƒíƒœ ë‚˜íƒ€ë‚´ê¸° ìœ„í•¨
+    reg [7:0] tx_result;//í˜„ì¬ ë³´ë‚¼ ë¬¸ìê°€ ë¬´ì—‡ì¸ì§€ ë‚˜íƒ€ë‚´ê¸° ìœ„í•¨
+    reg stst=0;//cnt ìƒíƒœì— ë”°ë¼ì„œ.
+    reg [3:0]txd_cnt=0;//byte ìœ„ì¹˜ ë‚˜íƒ€ëƒ„
     reg tx_line_clear=1;
     reg [63:0] rx_data_buf;
     reg start_state;
@@ -26,7 +26,7 @@ output reg txd;
               DATA_ST7=9,
               STOP_ST=10;
 
-    always @* begin//¾ğÁ¦µç 
+    always @* begin//tx_line_clearê°€ 1ë•Œë§Œ bufferì— ê°’ ì‹£ëŠ”ë‹¤
         if(tx_line_clear==1) begin
             rx_data_buf<=rx_data;
         end
@@ -34,16 +34,9 @@ output reg txd;
             rx_data_buf<=rx_data_buf;
     end
     
-    /*always @* begin
-        if(txd_cnt==0 && start_state !=1)
-            tx_line_clear<=1;
-        else
-            tx_line_clear<=0;
-    end*/
-    
     always @* begin
         case(txd_cnt)
-            4'b0000 : tx_result<=rx_data_buf[63:56]; //Ã³À½¿£ 
+            4'b0000 : tx_result<=rx_data_buf[63:56]; //ì²˜ìŒì—” 
             4'b0001 : tx_result<=rx_data_buf[55:48];
             4'b0010 : tx_result<=rx_data_buf[47:40];
             4'b0011 : tx_result<=rx_data_buf[39:32];
@@ -51,12 +44,12 @@ output reg txd;
             4'b0101 : tx_result<=rx_data_buf[23:16];
             4'b0110 : tx_result<=rx_data_buf[15:8];
             4'b0111 : tx_result<=rx_data_buf[7:0];
-            4'b1000 : tx_result<=8'h0D;//¸¶Áö¸·¿£ ¿£ÅÍ º¸³»±â
+            4'b1000 : tx_result<=8'h0D;//ë§ˆì§€ë§‰ì—” ì—”í„° ë³´ë‚´ê¸°
             default : tx_result<="";
         endcase
     end
 
-    always @*   begin//clk³ª ¹¹ ¾î¶² °Í¿¡µµ »ó°ü ¾øÀÌ
+    always @*   begin//clkë‚˜ ë­ ì–´ë–¤ ê²ƒì—ë„ ìƒê´€ ì—†ì´
         case(tx_st)
             IDLE_ST : txd<=1;
             START_ST : txd<=0;
@@ -74,23 +67,15 @@ output reg txd;
     end
 
     always @(posedge clk) begin
-        if(clk_cnt == 1084 || (uart_start==1 && tx_line_clear==1 && tx_st == IDLE_ST)) begin//1084 or °£°İ Á¼À» °æ¿ì uart_start°¡ µÇ´Â ¼ø°£ Áï½Ã ½ÃÀÛ
-            /*if(uart_start==1 && tx_line_clear==1)
-                start_state<=1;*/
+        if(clk_cnt == 1084 || (uart_start==1 && tx_line_clear==1)) begin//1084 or ê°„ê²© ì¢ì„ ê²½ìš° uart_startê°€ ë˜ëŠ” ìˆœê°„ ì¦‰ì‹œ ì‹œì‘
             tx_line_clear<=0;    
             clk_cnt<=0;
             case(tx_st)
                 IDLE_ST : begin
                     if(uart_start == 1 || (txd_cnt > 0 && txd_cnt < 9) )begin
-                        if(stst==0)//´Ù º¸³»±â Àü¿£
-                            tx_st<=START_ST;
-                        else//stst=1¶§ Áï,,,´Ù º¸³»¸é
-                        begin
-                            txd_cnt<=0;
-                            tx_st<=START_ST;
-                        end
+                        tx_st<=START_ST;
                     end
-                    else begin//txd_cnt==9
+                    else begin//txd_cnt==9 or uart_start!=0ì¸ ìƒíƒœ
                         tx_st<=IDLE_ST;
                         txd_cnt<=0;
                         tx_line_clear<=1;
@@ -117,12 +102,12 @@ output reg txd;
             clk_cnt<=clk_cnt+1;
     end
 
-    always @* begin//´Ù º¸³»±â Àü±îÁø 0
+    always @* begin//ë‹¤ ë³´ë‚´ê¸° ì „ê¹Œì§„ 0
         if(txd_cnt<9) begin
             stst<=0;
         end
         else begin
-            stst<=1;//´Ù º¸³»°í ³ª¼­ 1,
+            stst<=1;//ë‹¤ ë³´ë‚´ê³  ë‚˜ì„œ 1,
         end
     end
 
