@@ -7,5 +7,7 @@ If you want to know the sensor value through the can bus, You just need to send 
 The sensor data value from the sensor is connected to the U-art transmitter.
 Therefore, you can check the value in real time through the U-art terminal.
 
+This is the basic operation of can communication. You can upgrade it and apply it if you want.
+
 This code is referred to tommydag of github.
 If you have any questions about the code, feel free to ask.
