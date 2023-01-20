@@ -61,9 +61,9 @@ module top(
 	tx_block tx_block(clk,baud_clk,rst,address_tx,tx_data,tx_start,can_tx,txing);
 	
 	//Can rx block
-    rx_block rx_block(clk,baud_clk,rst,address_rx,can_rx,rx_start,rxing,rx_data,uart_start);
-    
-    //Uart tx block
-    uart_tx uart_tx(clk, rx_data, uart_start,txd);
+	rx_block rx_block(clk,baud_clk,rst,address_rx,can_rx,rx_start,rxing,rx_data,uart_start);
+
+	//Uart tx block
+	uart_tx uart_tx(clk, rx_data, uart_start,txd);
 	
 endmodule
